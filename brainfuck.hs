@@ -22,13 +22,12 @@ moveTape (State code tape tp output idx done) condition offset _default =
     tp' = if condition tp then tp + offset else _default
 
 getCommand :: State -> Char
-getCommand (State code _ _ _ idx _) = code !! (fromInteger idx)
+getCommand (State _    _ _ _ _   True)  = ' ' -- Doesn't matter because it's never used.
+getCommand (State code _ _ _ idx False) = code !! (fromInteger idx)
 
 step :: State -> State
 step (State code tape tp output idx done) =
-    if isDone
-      then state
-      else execute (getCommand state) state
+    execute (getCommand state) state
   where
     isDone = ((fromInteger idx) >= ((length code) - 1))
     state = State code tape tp output (idx + 1) isDone
