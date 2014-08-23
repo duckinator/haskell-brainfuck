@@ -1,12 +1,10 @@
--- Brainfuck interpreter!
-
 data State =
-    State { code        :: String,
-            tape        :: [Integer],
-            pointer     :: Integer,
-            output      :: String,
-            code_index  :: Integer,
-            done        :: Bool
+    State { code      :: String,
+            tape      :: [Integer],
+            pointer   :: Integer,
+            output    :: String,
+            codeIndex :: Integer,
+            done      :: Bool
           }
 
 adjustTapeValue :: State -> Integer -> State
@@ -14,8 +12,8 @@ adjustTapeValue (State code tape tp output idx done) adjustment =
     State code tape' tp output idx done
   where
     (ys, zs) = splitAt ((fromInteger tp) - 1) tape
-    tmp = (tape !! (fromInteger tp)) + adjustment
-    tape' = ys ++ [tmp] ++ zs
+    tmp = adjustment + head zs
+    tape' = ys ++ [tmp] ++ (tail zs)
 
 moveTape :: State -> (Integer -> Bool) -> Integer -> Integer -> State
 moveTape (State code tape tp output idx done) condition offset _default =
@@ -28,7 +26,9 @@ getCommand (State code _ _ _ idx _) = code !! (fromInteger idx)
 
 step :: State -> State
 step (State code tape tp output idx done) =
-    execute (getCommand state) state
+    if isDone
+      then state
+      else execute (getCommand state) state
   where
     isDone = ((fromInteger idx) >= ((length code) - 1))
     state = State code tape tp output (idx + 1) isDone
