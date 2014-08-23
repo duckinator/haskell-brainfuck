@@ -23,11 +23,11 @@ step :: State -> State
 step state@(State "" tape tp output) = state
 step oldState@(State (command:code) tape tp output) =
     step $ case command of
-      '>' -> step $ moveTape state (< 1024)   1    0
-      '<' -> step $ moveTape state (> 0)    (-1) 1024
+      '>' -> moveTape state (< 1024)   1    0
+      '<' -> moveTape state (> 0)    (-1) 1024
       
-      '+' -> step $ adjustTapeValue state   1
-      '-' -> step $ adjustTapeValue state (-1)
+      '+' -> adjustTapeValue state   1
+      '-' -> adjustTapeValue state (-1)
       {-
       '.' -> ???
       ',' -> ???
