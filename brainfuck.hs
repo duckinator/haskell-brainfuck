@@ -2,60 +2,44 @@ data State =
     State { code      :: String,
             tape      :: [Integer],
             pointer   :: Integer,
-            output    :: String,
-            codeIndex :: Integer,
-            done      :: Bool
+            output    :: String
           }
 
 adjustTapeValue :: State -> Integer -> State
-adjustTapeValue (State code tape tp output idx done) adjustment =
-    State code tape' tp output idx done
+adjustTapeValue (State code tape tp output) adjustment =
+    State code tape' tp output
   where
     (ys, zs) = splitAt ((fromInteger tp) - 1) tape
     tmp = adjustment + head zs
     tape' = ys ++ [tmp] ++ (tail zs)
 
 moveTape :: State -> (Integer -> Bool) -> Integer -> Integer -> State
-moveTape (State code tape tp output idx done) condition offset _default =
-    State code tape tp' output idx done
+moveTape (State code tape tp output) condition offset _default =
+    State code tape tp' output
   where
     tp' = if condition tp then tp + offset else _default
 
-getCommand :: State -> Char
-getCommand (State _    _ _ _ _   True)  = ' ' -- Doesn't matter because it's never used.
-getCommand (State code _ _ _ idx False) = code !! (fromInteger idx)
-
 step :: State -> State
-step (State code tape tp output idx done) =
-    execute (getCommand state) state
+step state@(State "" tape tp output) = state
+step oldState@(State (command:code) tape tp output) =
+    step $ case command of
+      '>' -> step $ moveTape state (< 1024)   1    0
+      '<' -> step $ moveTape state (> 0)    (-1) 1024
+      
+      '+' -> step $ adjustTapeValue state   1
+      '-' -> step $ adjustTapeValue state (-1)
+      {-
+      '.' -> ???
+      ',' -> ???
+      -}
+      _   -> state
   where
-    isDone = ((fromInteger idx) >= ((length code) - 1))
-    state = State code tape tp output (idx + 1) isDone
-
-execute :: Char -> State -> State
-execute '>' state = step $ moveTape state (\tp -> tp < 1024)   1  0
-execute '<' state = step $ moveTape state (\tp -> tp > 0)    (-1) 1024
-
-execute '+' state = step $ adjustTapeValue state   1
-execute '-' state = step $ adjustTapeValue state (-1)
-
-{-
-execute '.' state = ...
-execute ',' state = ...
-
-execute '[' state = ...
-execute ']' state = ...
--}
-
-execute  _  (State code tape tp output idx False) =
-    step $ State code tape tp output idx False
-
-execute  _  (State code tape tp output idx True)  = State code tape tp output idx True
+    state = State code tape tp output
 
 
 brainfuck :: String -> String
 brainfuck code =
-    output $ step $ State code tape 0 "" 0 False
+    output $ step $ State code tape 0 ""
   where
     tape = replicate 1024 0
 
